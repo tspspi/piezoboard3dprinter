@@ -4,7 +4,9 @@
 #include <util/twi.h>
 #include <stdint.h>
 
+#include "./main.h"
 #include "./sysclk.h"
+#include "./i2c.h"
 
 /*
 	Pin mapping
@@ -19,26 +21,16 @@
 	10	Inductive probe in	Digital in				PB2
 */
 
-#if !defined(__cplusplus) && !defined(FRAMAC_SKIP)
-	typedef int bool;
-	#define true 1
-	#define false 0
-#endif
-
-#ifndef PIEZO_I2C_ADDRESS
-	#define PIEZO_I2C_ADDRESS 0x11
-#endif
-
-#ifndef I2C_BUFFER_SIZE_RX
-	#define I2C_BUFFER_SIZE_RX 64
-#endif
-#ifndef I2C_BUFFER_SIZE_RX
-	#define I2C_BUFFER_SIZE_RX 64
-#endif
-
 #ifdef __cplusplus
 	extern "C" {
 #endif
+
+
+
+
+
+
+
 
 /*@
 	axiomatic hardware_registers {
@@ -88,11 +80,23 @@ int main() {
 	/* Disable serial (enabled by bootloader) */
 	UCSR0B = 0;
 
-	for(;;) {
+	/* Initialize the I2C port ... */
+	i2cSlaveInit(PIEZO_I2C_ADDRESS);
 
+	for(;;) {
+		i2cMessageLoop();
 	}
 }
 
+void handleI2CMessage(
+    volatile uint8_t* lpRingbuffer,
+    unsigned long int dwBufferSize,
+
+    unsigned long int dwBase,
+    unsigned long int dwMessageSize
+) {
+	return;
+}
 
 
 #ifdef __cplusplus

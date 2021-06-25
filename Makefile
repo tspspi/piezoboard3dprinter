@@ -2,9 +2,11 @@ CPUFREQ=16000000L
 FLASHDEV=/dev/ttyU0
 I2CADR=0x11
 SRCFILES=src/main.c \
-	src/sysclk.c
+	src/sysclk.c \
+	src/i2c.c
 HEADFILES=src/main.h \
-	src/sysclk.h
+	src/sysclk.h \
+	src/i2c.h
 
 all: bin/piezoboard.hex
 
