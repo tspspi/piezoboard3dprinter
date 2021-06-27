@@ -88,6 +88,12 @@ int main() {
 	}
 }
 
+/*
+	Handle an I2C message. The message is contained in an ringbuffer and it's
+	checksum has already been checked (it's not included in the message size).
+	The first byte is always the OpCode, the second again the length of the
+	message (one shouldn't really use this value)
+*/
 void handleI2CMessage(
     volatile uint8_t* lpRingbuffer,
     unsigned long int dwBufferSize,
@@ -95,6 +101,19 @@ void handleI2CMessage(
     unsigned long int dwBase,
     unsigned long int dwMessageSize
 ) {
+	uint8_t opCode = lpRingbuffer[dwBase];
+
+	switch(opCode) {
+		case i2cCmd_GetIDAndVersion:
+		case i2cCmd_GetThreshold:
+		case i2cCmd_SetThreshold:
+		case i2cCmd_ReadCurrentValues:
+		case i2cCmd_ReadCurrentAverages:
+		case i2cCmd_Reset:
+		default:
+			/* Unknown operation - ignore */
+			break;
+	}
 	return;
 }
 

@@ -34,6 +34,8 @@ enum i2cCommand {
 */
 void i2cSlaveInit(uint8_t address);
 
+void i2cTransmitBytes(uint8_t* lpMessage, unsigned long int dwLength);
+
 void i2cMessageLoop();
 
 #ifdef __cplusplus

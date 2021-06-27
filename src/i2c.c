@@ -204,3 +204,28 @@ void i2cMessageLoop() {
     handleI2CMessage(i2cBufferRX, I2C_BUFFER_SIZE_RX, i2cBufferRX_Tail+4, requiredPacketLength-4-1);
     i2cBufferRX_Tail = i2cBufferRX_Tail + requiredPacketLength; /* Drop data */
 }
+
+void i2cTransmitBytes(
+    uint8_t* lpMessage,
+    unsigned long int dwLength
+) {
+    unsigned long int i;
+
+    if(lpMessage == 0) { return; }
+    if(dwLength == 0) { return; }
+
+    /*
+        Check capacity
+    */
+    unsigned long int dwBufferedBytes = (i2cBufferTX_Tail <= i2cBufferTX_Head) ? (i2cBufferTX_Head - i2cBufferTX_Tail) : (I2C_BUFFER_SIZE_TX - i2cBufferTX_Tail + i2cBufferTX_Head);
+    unsigned long int dwCapacity = I2C_BUFFER_SIZE_TX - dwBufferedBytes;
+
+    if(dwLength > dwCapacity) { return; }
+
+    for(i = 0; i < dwLength; i=i+1) {
+        i2cBufferTX[i2cBufferTX_Head] = lpMessage[i];
+        i2cBufferTX_Head = (i2cBufferTX_Head + 1) % I2C_BUFFER_SIZE_TX;
+    }
+
+    return;
+}
