@@ -25,8 +25,8 @@
 	extern "C" {
 #endif
 
-
-
+static uint8_t currentThreshold = 0x00;
+static uint8_t vetoEnable = 0x01;
 
 
 
@@ -88,6 +88,12 @@ int main() {
 	}
 }
 
+static uint8_t handleI2CMessage_Response_IDAndVersion[16+2] = {
+	0xca, 0x26, 0x13, 0x06, 0xd7, 0x64, 0x11, 0xeb, 0x94, 0x24, 0xb4, 0x99, 0xba, 0xdf, 0x00, 0xa1,
+	0x01,
+	0xe8 /* Checksum - update on any change! */
+};
+
 /*
 	Handle an I2C message. The message is contained in an ringbuffer and it's
 	checksum has already been checked (it's not included in the message size).
@@ -105,10 +111,42 @@ void handleI2CMessage(
 
 	switch(opCode) {
 		case i2cCmd_GetIDAndVersion:
+		{
+			i2cTransmitBytes(handleI2CMessage_Response_IDAndVersion, sizeof(handleI2CMessage_Response_IDAndVersion));
+			break;
+		}
 		case i2cCmd_GetThreshold:
+		{
+			uint8_t bResponse[2];
+			bResponse[0] = currentThreshold;
+			bResponse[1] = 0x00 ^ currentThreshold;
+			i2cTransmitBytes(bResponse, sizeof(bResponse));
+			break;
+		}
 		case i2cCmd_SetThreshold:
+		{
+			/* Decode message ... */
+			if(dwBufferSize < 3) {
+				break; /* Invalid message ... */
+			}
+			uint8_t bNewThreshold = lpRingbuffer[dwBase+2];
+
+			currentThreshold = bNewThreshold;
+			/* ToDo: Write into EEPROM? */
+
+			break;
+		}
 		case i2cCmd_ReadCurrentValues:
 		case i2cCmd_ReadCurrentAverages:
+		case i2cCmd_GetVetoEnable:
+		{
+			uint8_t bResponse[2];
+			bResponse[0] = vetoEnable;
+			bResponse[1] = 0x00 ^ vetoEnable;
+			i2cTransmitBytes(bResponse, sizeof(bResponse));
+			break;
+		}
+		case i2cCmd_SetVetoEnable:
 		case i2cCmd_Reset:
 		default:
 			/* Unknown operation - ignore */

@@ -22,7 +22,10 @@ enum i2cCommand {
 	i2cCmd_ReadCurrentValues				= 4,
 	i2cCmd_ReadCurrentAverages				= 5,
 
-	i2cCmd_Reset							= 6,
+	i2cCmd_SetVetoEnable					= 6,
+	i2cCmd_GetVetoEnable					= 7,
+
+	i2cCmd_Reset							= 8
 };
 
 /*@
