@@ -8,6 +8,12 @@
     extern "C" {
 #endif
 
+enum triggerMode {
+	triggerMode_PiezoVeto			= 0x00,
+	triggerMode_PiezoOnly			= 0x01,
+	triggerMode_Capacitive		= 0x02,
+};
+
 void handleI2CMessage(
     volatile uint8_t* lpRingbuffer,
     unsigned long int dwBufferSize,

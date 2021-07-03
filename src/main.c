@@ -26,7 +26,7 @@
 #endif
 
 static uint8_t currentThreshold = 0x00;
-static uint8_t vetoEnable = 0x01;
+static enum triggerMode triggerMode = 0x00;
 
 
 
@@ -138,16 +138,31 @@ void handleI2CMessage(
 		}
 		case i2cCmd_ReadCurrentValues:
 		case i2cCmd_ReadCurrentAverages:
-		case i2cCmd_GetVetoEnable:
+		case i2cCmd_GetTriggerMode:
 		{
 			uint8_t bResponse[2];
-			bResponse[0] = vetoEnable;
-			bResponse[1] = 0x00 ^ vetoEnable;
+			bResponse[0] = (uint8_t)triggerMode;
+			bResponse[1] = 0x00 ^ (uint8_t)triggerMode;
 			i2cTransmitBytes(bResponse, sizeof(bResponse));
 			break;
 		}
-		case i2cCmd_SetVetoEnable:
+		case i2cCmd_SetTriggerMode:
+		{
+			if(dwBufferSize < 3) {
+				break; /* Invalid message */
+			}
+			uint8_t newMode = lpRingbuffer[dwBase + 2];
+
+			switch(newMode) {
+				case triggerMode_PiezoOnly:		triggerMode 	= triggerMode_PiezoOnly; break;
+				case triggerMode_PiezoVeto: 	triggerMode 	= triggerMode_PiezoVeto; break;
+				case triggerMode_Capacitive: 	triggerMode 	= triggerMode_Capacitive; break;
+				default: 											break; /* Invalid message */
+			}
+			break;
+		}
 		case i2cCmd_Reset:
+		case i2cCmd_Recalibrate:
 		default:
 			/* Unknown operation - ignore */
 			break;

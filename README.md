@@ -15,13 +15,14 @@ include opcode and length.
 All packets are protected by a simple XOR based checksum and have fixed length.
 Invalid packets will be silently dropped.
 
-| OpCode | Data length | Content                                            | Response data                                                 |
-| ------ | ----------- | -------------------------------------------------- | ------------------------------------------------------------- |
-| 0x01   | 0           | Query device UUID                                  | 16 byte UUID, Checksum                                        |
-| 0x02   | 0           | Query current threshold                            | 1 Byte current threshold, 1 Byte checksum                     |
-| 0x03   | 1           | Set current threshold                              | None                                                          |
-| 0x04   | 0           | Query current sensor readings (raw data)           | 8 byte sensor readings (2 bytes per channel), 1 byte checksum |
-| 0x05   | 0           | Query current running averages                     | 8 byte sensor readings (2 bytes per channel), 1 byte checksum |
-| 0x06   | 1           | Set external veto enable (1) or disable (0)        | None                                                          |
-| 0x07   | 0           | Check external veto enable (1) or disable (0)      | 1 Byte data, 1 Byte checksum                                  |
-| 0x08   | 0           | Reset board                                        | None                                                          |
+| OpCode | Data length | Content                                                                         | Response data                                                 |
+| ------ | ----------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| 0x01   | 0           | Query device UUID                                                               | 16 byte UUID, Checksum                                        |
+| 0x02   | 0           | Query current threshold                                                         | 1 Byte current threshold, 1 Byte checksum                     |
+| 0x03   | 1           | Set current threshold                                                           | None                                                          |
+| 0x04   | 0           | Query current sensor readings (raw data)                                        | 8 byte sensor readings (2 bytes per channel), 1 byte checksum |
+| 0x05   | 0           | Query current running averages                                                  | 8 byte sensor readings (2 bytes per channel), 1 byte checksum |
+| 0x06   | 1           | Set trigger mode (0: Piezos with veto, 1: Only Piezo, 2: Use capacitive probe)  | None                                                          |
+| 0x07   | 0           | Get trigger mode                                                                | 1 Byte data, 1 Byte checksum                                  |
+| 0x08   | 0           | Reset board                                                                     | None                                                          |
+| 0x09   | 0           | Calibrate centerline for piezos                                                 | None                                                          |

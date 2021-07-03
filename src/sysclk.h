@@ -5,9 +5,11 @@
 #include <stdint.h>
 
 #ifndef __cplusplus
-	typedef int bool;
-	#define true 1
-	#define false 0
+	#ifndef true
+		typedef int bool;
+		#define true 1
+		#define false 0
+	#endif
 #endif
 
 #define SYSCLK_TIMER_OVERFLOW_MICROS	(64L * 256L * (F_CPU / 1000000L))
