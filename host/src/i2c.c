@@ -1,3 +1,9 @@
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#include "./i2c.h"
+
 struct i2cBusImpl {
 	struct i2cBus			obj;
 
@@ -5,12 +11,39 @@ struct i2cBusImpl {
 };
 
 
+static enum i2cError i2cBusImpl_i2cRelease(
+	struct i2cBus* lpBus
+) {
+	return i2cE_ImplementationError;
+}
+static enum i2cError i2cBusImpl_i2cRead(
+	struct i2cBus* lpBus,
+	uint32_t devAddr,
+	char* lpOut,
+	unsigned long int dwDataLength
+) {
+	return i2cE_ImplementationError;
+}
+static enum i2cError i2cBusImpl_i2cWrite(
+	struct i2cBus* lpBus,
+	uint32_t devAddr,
+	char* lpData,
+	unsigned long int dwDataLength
+) {
+	return i2cE_ImplementationError;
+}
+static enum i2cError i2cBusImpl_i2cScan(
+	struct i2cBus* lpBus,
+	i2cScan_ResultCallback lpfnCallbackDeviceFound
+) {
+	return i2cE_ImplementationError;
+}
 
 static struct i2cBusVTBL i2cDefaultVTBL = {
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	&i2cBusImpl_i2cRelease,
+	&i2cBusImpl_i2cRead,
+	&i2cBusImpl_i2cWrite,
+	&i2cBusImpl_i2cScan
 };
 
 static char* i2cDefaultDevices[] = {
@@ -55,5 +88,6 @@ enum i2cError i2cConnect(
 	lpNew->obj.lpReserved = (void*)lpNew;
 	lpNew->obj.vtbl = &i2cDefaultVTBL;
 
-	(*lpOut) = (struct i2cBus)(lpNew->obj);
+	(*lpOut) = (struct i2cBus*)(&(lpNew->obj));
+	return i2cE_Ok;
 }

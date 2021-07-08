@@ -8,6 +8,8 @@ enum i2cError {
 	i2cE_OutOfMemory,
 	i2cE_Failed,
 	i2cE_DeviceNotFound,
+
+	i2cE_ImplementationError,
 };
 
 struct i2cBus;
