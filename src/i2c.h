@@ -36,15 +36,22 @@ enum i2cCommand {
 	ensures TWCR == 0xC5;
 	ensures (TWAR == address << 1) || (TWAR == ((address << 1) | 0x01));
 */
-void i2cSlaveInit(uint8_t address);
+void i2cSlaveInit(
+	uint8_t address
+);
 
-void i2cTransmitBytes(uint8_t* lpMessage, unsigned long int dwLength);
+void i2cTransmitBytes(
+	uint8_t* lpMessage,
+	unsigned long int dwLength
+);
 
 void i2cTransmitPacket(
 	uint8_t* lpPacket,
 	uint8_t bOpCode,
 	unsigned long int dwPayloadLength
 );
+
+void i2cQueuePreamble();
 
 void i2cMessageLoop();
 

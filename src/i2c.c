@@ -261,5 +261,15 @@ void i2cTransmitPacket(
 
 	i2cBufferTX[(i2cBufferTX_Head+6+i) % I2C_BUFFER_SIZE_TX] = bChecksum;
 
+	i2cBufferTX_Head = (i2cBufferTX_Head+6+i+1) % I2C_BUFFER_SIZE_TX;
+
 	return;
+}
+
+void i2cQueuePreamble() {
+	i2cBufferTX[ i2cBufferTX_Head                        ] = 0xAA;
+	i2cBufferTX[(i2cBufferTX_Head+1) % I2C_BUFFER_SIZE_TX] = 0x55;
+	i2cBufferTX[(i2cBufferTX_Head+2) % I2C_BUFFER_SIZE_TX] = 0xAA;
+	i2cBufferTX[(i2cBufferTX_Head+3) % I2C_BUFFER_SIZE_TX] = 0x55;
+	i2cBufferTX_Head = (i2cBufferTX_Head + 4) % I2C_BUFFER_SIZE_TX;
 }
