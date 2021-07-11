@@ -40,6 +40,12 @@ void i2cSlaveInit(uint8_t address);
 
 void i2cTransmitBytes(uint8_t* lpMessage, unsigned long int dwLength);
 
+void i2cTransmitPacket(
+	uint8_t* lpPacket,
+	uint8_t bOpCode,
+	unsigned long int dwPayloadLength
+);
+
 void i2cMessageLoop();
 
 #ifdef __cplusplus

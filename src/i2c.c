@@ -180,7 +180,12 @@ void i2cMessageLoop() {
         return; /* We have to wait longer ... */
     }
 
-    /* Perform checksum check ... */
+    /*
+		Perform checksum check ...
+
+		The checksum includes OpCode and Length but not the synchronization pattern
+		since the sync pattern could have an indefinite length
+	*/
     uint8_t chksum = 0x00;
     for(i = 4; i < requiredPacketLength; i=i+1) {
         chksum = chksum ^ i2cBufferRX[(i2cBufferRX_Tail + i) % I2C_BUFFER_SIZE_RX];
@@ -192,7 +197,8 @@ void i2cMessageLoop() {
             checksum mismatches or provide some kind of notification?
 
             We simply skip the synchronization pattern - the sync loop above
-            will perform resynchronization anyways ...
+            will perform resynchronization anyways just in case there is
+			a packet start somewhere shifted in between ...
         */
         i2cBufferRX_Tail = (i2cBufferRX_Tail + 4) % I2C_BUFFER_SIZE_RX;
         return;
@@ -229,3 +235,31 @@ void i2cTransmitBytes(
 
     return;
 }
+
+void i2cTransmitPacket(
+	uint8_t* lpPacket,
+	uint8_t bOpCode,
+	unsigned long int dwPayloadLength
+) {
+	unsigned long int i;
+	uint8_t bChecksum = 0x00;
+
+	i2cBufferTX[ i2cBufferTX_Head                        ] = 0xAA;
+	i2cBufferTX[(i2cBufferTX_Head+1) % I2C_BUFFER_SIZE_TX] = 0x55;
+	i2cBufferTX[(i2cBufferTX_Head+2) % I2C_BUFFER_SIZE_TX] = 0xAA;
+	i2cBufferTX[(i2cBufferTX_Head+3) % I2C_BUFFER_SIZE_TX] = 0x55;
+	i2cBufferTX[(i2cBufferTX_Head+4) % I2C_BUFFER_SIZE_TX] = bOpCode;
+	i2cBufferTX[(i2cBufferTX_Head+5) % I2C_BUFFER_SIZE_TX] = ((uint8_t)dwPayloadLength+2); /* Includes opcode and length field */
+
+	bChecksum = bChecksum ^ bOpCode;
+	bChecksum = bChecksum ^ ((uint8_t)dwPayloadLength+2);
+
+	for(i = 0; i < dwPayloadLength; i=i+1) {
+		i2cBufferTX[(i2cBufferTX_Head+6+i) % I2C_BUFFER_SIZE_TX] = lpPacket[i];
+		bChecksum = bChecksum ^ lpPacket[i];
+	}
+
+	i2cBufferTX[(i2cBufferTX_Head+6+i) % I2C_BUFFER_SIZE_TX] = bChecksum;
+
+	return;
+)
