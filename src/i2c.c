@@ -262,4 +262,4 @@ void i2cTransmitPacket(
 	i2cBufferTX[(i2cBufferTX_Head+6+i) % I2C_BUFFER_SIZE_TX] = bChecksum;
 
 	return;
-)
+}
