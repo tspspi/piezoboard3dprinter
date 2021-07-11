@@ -21,13 +21,13 @@ typedef enum i2cError (*i2cRelease)(
 typedef enum i2cError (*i2cRead)(
 	struct i2cBus* lpBus,
 	uint32_t devAddr,
-	char* lpOut,
+	uint8_t* lpOut,
 	unsigned long int dwDataLength
 );
 typedef enum i2cError (*i2cWrite)(
 	struct i2cBus* lpBus,
 	uint32_t devAddr,
-	char* lpData,
+	uint8_t* lpData,
 	unsigned long int dwDataLength
 );
 typedef void (*i2cScan_ResultCallback)(
