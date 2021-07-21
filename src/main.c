@@ -1,5 +1,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/eeprom.h>
+
 #include <math.h>
 #include <util/twi.h>
 #include <stdint.h>
@@ -7,6 +9,7 @@
 #include "./main.h"
 #include "./sysclk.h"
 #include "./i2c.h"
+#include "./adc.h"
 
 /*
 	Pin mapping
@@ -25,12 +28,67 @@
 	extern "C" {
 #endif
 
-static uint8_t currentThreshold = 0x00;
-static enum triggerMode triggerMode = 0x00;
 
 
+#ifndef SETTINGS_EEPROM_LOCATION
+	#define SETTINGS_EEPROM_LOCATION 0
+#endif
 
+struct eepromSettings currentSettings;
+static uint32_t debounceCounter;
+static unsigned long int debounceStart;
 
+static void eepromSave() {
+	unsigned long int i;
+	uint8_t chkSum;
+
+	chkSum = 0;
+	for(i = 0; i < sizeof(struct eepromSettings)-2; i=i+1) {
+		chkSum = chkSum ^ ((char*)(&currentSettings))[i];
+	}
+
+	currentSettings.xorChecksum = chkSum;
+	currentSettings.negChecksum = (~chkSum);
+
+	eeprom_write_block(&currentSettings, SETTINGS_EEPROM_LOCATION, sizeof(struct eepromSettings));
+}
+
+static void eepromDefaults() {
+	currentSettings.trigMode 														= triggerMode_PiezoOrCapacitive; /* Enable Piezos *and* external probe */
+	currentSettings.movingAverage.thresholdFactor 			= 10;
+	currentSettings.movingAverage.dMovingAverageAlpha 	= 0.4f;
+	currentSettings.movingAverage.dwInitSamples 				= 1000;
+	currentSettings.debounceLength 											= 60; /* In milliseconds (verified against systick timer so might not be totally accurate - do not base backlash compensation on this value!) */
+
+	eepromSave();
+}
+
+static void eepromLoad() {
+	unsigned long int i;
+	uint8_t chkSum;
+
+	eeprom_read_block(&currentSettings, SETTINGS_EEPROM_LOCATION, sizeof(struct eepromSettings));
+
+	chkSum = 0;
+	for(i = 0; i < sizeof(struct eepromSettings)-2; i=i+1) {
+		chkSum = chkSum ^ ((char*)(&currentSettings))[i];
+	}
+
+	if((chkSum == currentSettings.xorChecksum) && ((~chkSum) == currentSettings.negChecksum)) {
+		return;
+	}
+
+	/*
+		Initialize to default values and invoke store settings ...
+	*/
+	currentSettings.trigMode 														= triggerMode_PiezoOrCapacitive; /* Enable Piezos *and* external probe */
+	currentSettings.movingAverage.thresholdFactor 			= 10;
+	currentSettings.movingAverage.dMovingAverageAlpha 	= 0.4f;
+	currentSettings.movingAverage.dwInitSamples 				= 1000;
+	currentSettings.debounceLength 											= 60; /* In milliseconds (verified against systick timer so might not be totally accurate - do not base backlash compensation on this value!) */
+
+	eepromSave();
+}
 
 /*@
 	axiomatic hardware_registers {
@@ -77,14 +135,82 @@ int main() {
 		delay(1000);
 	#endif
 
+	/* PB2 is our output pin ... we do not assert now */
+	DDRB = DDRB | 0x04;
+	PORTB = PORTB & (~0x04);
+
 	/* Disable serial (enabled by bootloader) */
 	UCSR0B = 0;
 
 	/* Initialize the I2C port ... */
 	i2cSlaveInit(PIEZO_I2C_ADDRESS);
 
+	/* Load settings from EEPROM */
+	eepromLoad();
+
+	/* Intiialize ADC */
+	adcInit();
+	adcStartCalibration();
+
 	for(;;) {
 		i2cMessageLoop();
+
+		switch(currentSettings.trigMode) {
+			case triggerMode_PiezoOnly:
+			{
+				if((adcTriggered != false) && (debounceCounter == 0)) {
+					PORTB = PORTB | 0x04;
+					debounceCounter = currentSettings.debounceLength;
+					debounceStart = millis();
+				}
+				break;
+			}
+			case triggerMode_PiezoVeto:
+			{
+				if((adcTriggered != false) && (debounceCounter == 0) && ((PINB & 0x02) != 0)) {
+					PORTB = PORTB | 0x04;
+					debounceCounter = currentSettings.debounceLength;
+					debounceStart = millis();
+				}
+				break;
+			}
+			case triggerMode_Capacitive:
+			{
+				if((PINB & 0x02) != 0) {
+					PORTB = PORTB | 0x04;
+					debounceCounter = currentSettings.debounceLength;
+					debounceStart = millis();
+				}
+				break;
+			}
+			case triggerMode_PiezoOrCapacitive:
+			{
+				if(((adcTriggered != false) && (debounceCounter == 0)) || ((PINB & 0x02) != 0)) {
+					PORTB = PORTB | 0x04;
+					debounceCounter = currentSettings.debounceLength;
+					debounceStart = millis();
+				}
+				break;
+			}
+		}
+
+		if(debounceCounter > 0) {
+			unsigned long int debounceEnd;
+			unsigned long int milCurrent = millis();
+			debounceEnd = debounceStart + debounceCounter;
+
+			if(debounceEnd < debounceStart) {
+				if((milCurrent > debounceEnd) && (milCurrent < debounceStart)) {
+					debounceCounter = 0;
+					PORTB = PORTB & (~0x04);
+				}
+			} else {
+				if((milCurrent > debounceEnd) || (milCurrent < debounceStart)) {
+					debounceCounter = 0;
+					PORTB = PORTB & (~0x04);
+				}
+			}
+		}
 	}
 }
 
@@ -118,8 +244,8 @@ void handleI2CMessage(
 		case i2cCmd_GetThreshold:
 		{
 			uint8_t bResponse[2];
-			bResponse[0] = currentThreshold;
-			bResponse[1] = 0x00 ^ currentThreshold;
+			bResponse[0] = (uint8_t)(currentSettings.movingAverage.thresholdFactor);
+			bResponse[1] = 0x00 ^ (uint8_t)(currentSettings.movingAverage.thresholdFactor);
 			i2cTransmitBytes(bResponse, sizeof(bResponse));
 			break;
 		}
@@ -131,7 +257,7 @@ void handleI2CMessage(
 			}
 			uint8_t bNewThreshold = lpRingbuffer[dwBase+2];
 
-			currentThreshold = bNewThreshold;
+			currentSettings.movingAverage.thresholdFactor = bNewThreshold;
 			/* ToDo: Write into EEPROM? */
 
 			break;
@@ -141,8 +267,8 @@ void handleI2CMessage(
 		case i2cCmd_GetTriggerMode:
 		{
 			uint8_t bResponse[2];
-			bResponse[0] = (uint8_t)triggerMode;
-			bResponse[1] = 0x00 ^ (uint8_t)triggerMode;
+			bResponse[0] = (uint8_t)currentSettings.trigMode;
+			bResponse[1] = 0x00 ^ (uint8_t)currentSettings.trigMode;
 			i2cTransmitBytes(bResponse, sizeof(bResponse));
 			break;
 		}
@@ -154,15 +280,21 @@ void handleI2CMessage(
 			uint8_t newMode = lpRingbuffer[dwBase + 2];
 
 			switch(newMode) {
-				case triggerMode_PiezoOnly:		triggerMode 	= triggerMode_PiezoOnly; break;
-				case triggerMode_PiezoVeto: 	triggerMode 	= triggerMode_PiezoVeto; break;
-				case triggerMode_Capacitive: 	triggerMode 	= triggerMode_Capacitive; break;
-				default: 											break; /* Invalid message */
+				case triggerMode_PiezoOnly:					currentSettings.trigMode = triggerMode_PiezoOnly; 				break;
+				case triggerMode_PiezoVeto: 				currentSettings.trigMode = triggerMode_PiezoVeto; 				break;
+				case triggerMode_Capacitive: 				currentSettings.trigMode = triggerMode_Capacitive; 				break;
+				case triggerMode_PiezoOrCapacitive:	currentSettings.trigMode = triggerMode_PiezoOrCapacitive;	break;
+				default: 																																											break; /* Invalid message */
 			}
 			break;
 		}
 		case i2cCmd_Reset:
+			eepromDefaults();
+			adcStartCalibration();
+			break;
 		case i2cCmd_Recalibrate:
+			adcStartCalibration();
+			break;
 		default:
 			/* Unknown operation - ignore */
 			break;
