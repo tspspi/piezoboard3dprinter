@@ -13,10 +13,15 @@
 	#endif
 #endif
 
+#define PIEZOBOARD_FLAG__NO_BUS_CLOSE_ON_RELEASE				0x00000001
+
+#define PIEZOBOARD_FLAG__VALIDFLAGS											(PIEZOBOARD_FLAG__NO_BUS_CLOSE_ON_RELEASE)
+
 enum piezoboardError {
 	piezoE_Ok					= 0,
 
 	piezoE_InvalidParam,
+	piezoE_OutOfMemory,
 };
 
 struct piezoboard;
@@ -38,15 +43,51 @@ typedef enum piezoboardError (*lpfnPiezoboard_GetThreshold)(
 	struct piezoboard* lpSelf,
 	uint8_t* lpThreshold
 );
+typedef enum piezoboardError (*lpfnPiezoboard_GetTriggerMode)(
+	struct piezoboard* lpSelf,
+	enum piezoTriggerMode* lpTriggerMode
+);
+typedef enum piezoboardError (*lpfnPiezoboard_SetTriggerMode)(
+	struct piezoboard* lpSelf,
+	enum piezoTriggerMode trigMode
+);
+typedef enum piezoboardError (*lpfnPiezoboard_Reset)(
+	struct piezoboard* lpSelf
+);
+typedef enum piezoboardError (*lpfnPiezoboard_Recalibrate)(
+	struct piezoboard* lpSelf
+);
+typedef enum piezoboardError (*lpfnPiezoboard_StoreSettings)(
+	struct piezoboard* lpSelf
+);
 
 
+struct piezoboardVtbl {
+	lpfnPiezoboard_Release								release;
 
+	lpfnPiezoboard_Identify								identify;
+
+	lpfnPiezoboard_SetThreshold						setThreshold;
+	lpfnPiezoboard_GetThreshold						getThreshold;
+	lpfnPiezoboard_GetTriggerMode					getTriggerMode;
+	lpfnPiezoboard_SetTriggerMode					setTriggerMode;
+
+	lpfnPiezoboard_Reset									reset;
+	lpfnPiezoboard_Recalibrate						recalibrate;
+	lpfnPiezoboard_StoreSettings					storeSettings;
+};
+struct piezoboard {
+	struct piezoboardVtbl*								vtbl;
+	void*																	lpReserved;
+};
 
 
 
 enum piezoboardError piezoboardConnect(
+	struct piezoboard** lpBoardOut,
 	struct i2cBus* lpBus,
-	uint8_t boardAddress
+	uint8_t boardAddress,
+	uint32_t dwFlags
 );
 
 #ifdef __cplusplus

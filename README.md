@@ -26,3 +26,4 @@ Invalid packets will be silently dropped.
 | 0x07   | 0           | Get trigger mode                                                                | 1 Byte data, 1 Byte checksum                                  |
 | 0x08   | 0           | Reset board                                                                     | None                                                          |
 | 0x09   | 0           | Calibrate centerline for piezos                                                 | None                                                          |
+| 0x0A   | 0           | Store settings to EEPROM                                                        | None                                                          |

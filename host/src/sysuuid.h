@@ -7,6 +7,14 @@
 	extern "C" {
 #endif
 
+#ifndef __cplusplus
+	#ifndef true
+		typedef unsigned char bool;
+		#define true 1
+		#define false 0
+	#endif
+#endif
+
 #ifndef sysUuid_Defined
 	struct sysUuid {
 		uint32_t p1;
@@ -15,8 +23,13 @@
 	};
 
 	#define sysUuid_Defined 1
-#endif
 
+	int sysUuidCompare(
+		struct sysUuid* lpID1,
+		struct sysUuid* lpID2
+	);
+
+#endif
 
 #ifdef __cplusplus
 	} /*	extern "C" */
