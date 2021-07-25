@@ -208,6 +208,8 @@ void systickInit() {
 	TCCR0B = 0x03;		/* /64 prescaler */
 	TIMSK0 = 0x01;		/* Enable overflow interrupt */
 
+	PRR = PRR & (~0x20);
+
 	SREG = sregOld;
 }
 
