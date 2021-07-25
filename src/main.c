@@ -124,20 +124,23 @@ int main() {
 
 	#ifdef DEBUG
 		/* In debug mode signal bootup via LED */
-		DDRB = 0x20;
-		PORTB = 0x20;
+		DDRB = 0x02;
+		PORTB = 0x02;
 		delay(1000);
-		PORTB = 0x00;
+		PORTB = PORTB ^ 0x02;
 		delay(1000);
-		PORTB = 0x20;
+		PORTB = PORTB ^ 0x02;
 		delay(1000);
-		PORTB = 0x00;
+		PORTB = PORTB ^ 0x02;
 		delay(1000);
 	#endif
 
 	/* PB2 is our output pin ... we do not assert now */
-	DDRB = DDRB | 0x04;
-	PORTB = PORTB & (~0x04);
+	DDRB = DDRB | 0x02;
+	PORTB = PORTB & (~0x02);
+
+	/* PB1 is our input pin without pullup or pulldown */
+	DDRB = DDRB & (~0x04);
 
 	/* Disable serial (enabled by bootloader) */
 	UCSR0B = 0;
@@ -151,15 +154,17 @@ int main() {
 	/* Intiialize ADC */
 	adcInit();
 	adcStartCalibration();
-
+	#if 0
+		currentSettings.trigMode = triggerMode_Capacitive;
+		currentSettings.debounceLength = 10000;
+	#endif
 	for(;;) {
 		i2cMessageLoop();
-
 		switch(currentSettings.trigMode) {
 			case triggerMode_PiezoOnly:
 			{
 				if((adcTriggered != false) && (debounceCounter == 0)) {
-					PORTB = PORTB | 0x04;
+					PORTB = PORTB | 0x02;
 					debounceCounter = currentSettings.debounceLength;
 					debounceStart = millis();
 				}
@@ -167,8 +172,8 @@ int main() {
 			}
 			case triggerMode_PiezoVeto:
 			{
-				if((adcTriggered != false) && (debounceCounter == 0) && ((PINB & 0x02) != 0)) {
-					PORTB = PORTB | 0x04;
+				if((adcTriggered != false) && (debounceCounter == 0) && ((PINB & 0x04) != 0)) {
+					PORTB = PORTB | 0x02;
 					debounceCounter = currentSettings.debounceLength;
 					debounceStart = millis();
 				}
@@ -176,8 +181,8 @@ int main() {
 			}
 			case triggerMode_Capacitive:
 			{
-				if((PINB & 0x02) != 0) {
-					PORTB = PORTB | 0x04;
+				if((PINB & 0x04) != 0) {
+					PORTB = PORTB | 0x02;
 					debounceCounter = currentSettings.debounceLength;
 					debounceStart = millis();
 				}
@@ -185,7 +190,7 @@ int main() {
 			}
 			case triggerMode_PiezoOrCapacitive:
 			{
-				if(((adcTriggered != false) && (debounceCounter == 0)) || ((PINB & 0x02) != 0)) {
+				if(((adcTriggered != false) && (debounceCounter == 0)) || ((PINB & 0x04) != 0)) {
 					PORTB = PORTB | 0x04;
 					debounceCounter = currentSettings.debounceLength;
 					debounceStart = millis();
@@ -202,12 +207,12 @@ int main() {
 			if(debounceEnd < debounceStart) {
 				if((milCurrent > debounceEnd) && (milCurrent < debounceStart)) {
 					debounceCounter = 0;
-					PORTB = PORTB & (~0x04);
+					PORTB = PORTB & (~0x02);
 				}
 			} else {
 				if((milCurrent > debounceEnd) || (milCurrent < debounceStart)) {
 					debounceCounter = 0;
-					PORTB = PORTB & (~0x04);
+					PORTB = PORTB & (~0x02);
 				}
 			}
 		}
