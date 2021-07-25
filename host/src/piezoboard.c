@@ -1,3 +1,6 @@
+#include <stdint.h>
+#include <stdlib.h>
+
 #include "./i2c.h"
 #include "./piezoboard.h"
 
