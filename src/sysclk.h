@@ -12,9 +12,9 @@
 	#endif
 #endif
 
-#define SYSCLK_TIMER_OVERFLOW_MICROS	(64L * 256L * (F_CPU / 1000000L))
-#define SYSCLK_MILLI_INCREMENT			(SYSCLK_TIMER_OVERFLOW_MICROS / 1000)
-#define SYSCLK_MILLIFRACT_INCREMENT		((SYSCLK_TIMER_OVERFLOW_MICROS % 1000) >> 3)
+#define SYSCLK_TIMER_OVERFLOW_MICROS	(64L * ((256L * 1000000L) / F_CPU))
+#define SYSCLK_MILLI_INCREMENT			(SYSCLK_TIMER_OVERFLOW_MICROS / 1000L)
+#define SYSCLK_MILLIFRACT_INCREMENT		((SYSCLK_TIMER_OVERFLOW_MICROS % 1000L) >> 3)
 #define SYSCLK_MILLIFRACT_MAXIMUM		(1000 >> 3)
 
 
@@ -60,3 +60,7 @@ void delay(unsigned long millisecs);
 	assigns \nothing;
 */
 void delayMicros(unsigned int microDelay);
+
+#ifdef __cplusplus
+	} /* extern "C" { */
+#endif
