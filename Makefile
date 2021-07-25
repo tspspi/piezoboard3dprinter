@@ -14,7 +14,7 @@ all: bin/piezoboard.hex
 
 tmp/piezoboard.bin: $(SRCFILES) $(HEADFILES)
 
-	avr-gcc -Wall -Os -mmcu=atmega328p -DF_CPU=$(CPUFREQ) -DPIEZO_I2C_ADDRESS=$(I2CADR) -o tmp/piezoboard.bin $(SRCFILES)
+	avr-gcc -Wall -DDEBUG -Os -mmcu=atmega328p -DF_CPU=$(CPUFREQ) -DPIEZO_I2C_ADDRESS=$(I2CADR) -o tmp/piezoboard.bin $(SRCFILES)
 
 bin/piezoboard.hex: tmp/piezoboard.bin
 
@@ -24,7 +24,7 @@ bin/piezoboard.hex: tmp/piezoboard.bin
 flash: bin/piezoboard.hex
 
 	sudo chmod 666 $(FLASHDEV)
-	avrdude -v -p atmega328p -c avrisp -P $(FLASHDEV) -b 57600 -D -U flash:w:bin/piezoboard.hex:i
+	avrdude -v -p atmega328p -c avrisp -P $(FLASHDEV) -b 57600 -U lfuse:w:0xff:m -U flash:w:bin/piezoboard.hex:i
 
 framac: $(SRCFILES)
 
