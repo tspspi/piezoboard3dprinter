@@ -32,12 +32,28 @@ ISR(ADC_vect) {
 
 		/* Update moving average */
 		currentMovingAverage[sampledValue] = ((float)(currentMovingAverage[sampledValue]) * (1.0f - currentSettings.movingAverage.dMovingAverageAlpha) + (float)(currentADCValues[sampledValue]) * currentSettings.movingAverage.dMovingAverageAlpha);
-		currentMovingDeviation[sampledValue] = (currentMovingAverage[sampledValue] > refCenterline[sampledValue]) ? currentMovingAverage[sampledValue] - ((float)(refCenterline[sampledValue])) : ((float)(refCenterline[sampledValue])) - currentMovingAverage[sampledValue];
-		if(currentMovingDeviation[sampledValue] > currentSettings.movingAverage.thresholdFactor) { adcTriggered = true; }
+		currentMovingDeviation[sampledValue] = (currentMovingAverage[sampledValue] > refCenterline[sampledValue]) ? currentMovingAverage[sampledValue] - refCenterline[sampledValue] : refCenterline[sampledValue] - currentMovingAverage[sampledValue];
+		if(currentMovingDeviation[sampledValue] > currentSettings.movingAverage.thresholdFactor) {
+			adcTriggered = true;
+		}
 	} else {
-		refCenterline[sampledValue] = refCenterline[sampledValue] + ((float)ADC) / ((float)(currentSettings.movingAverage.dwInitSamples));
+		refCenterline[sampledValue] = refCenterline[sampledValue] + (float)ADC;
+		if(sampledValue == 3) {
+			if((adcMovingAverageCapCenterline = adcMovingAverageCapCenterline - 1) == 0) {
+				refCenterline[0] = ((float)refCenterline[0]) / (float)(currentSettings.movingAverage.dwInitSamples);
+				refCenterline[1] = ((float)refCenterline[1]) / (float)(currentSettings.movingAverage.dwInitSamples);
+				refCenterline[2] = ((float)refCenterline[2]) / (float)(currentSettings.movingAverage.dwInitSamples);
+				refCenterline[3] = ((float)refCenterline[3]) / (float)(currentSettings.movingAverage.dwInitSamples);
+				#if 0
+					/*
+						This code is used for debug purposes - it pulls the output
+						high until the initialization has finished
+					*/
+					PORTB = PORTB & (~0x02);
+				#endif
+			}
+		}
 	}
-
 
 	/* Select next MUX value for after the next iteration */
 	ADMUX = (oldMux & 0xE0) | (((oldMux & 0x1F) + 1) & 0x03);
@@ -70,6 +86,8 @@ void adcInit() {
 		cli();
 	#endif
 	{
+		adcStartCalibration();
+
 		PRR = PRR & ~(0x01);
 		ADMUX = 0x40; /* AVCC reference voltage, MUX 0, right aligned */
 		ADCSRB = 0x00; /* Free running trigger mode, no comparator multiplexed */
