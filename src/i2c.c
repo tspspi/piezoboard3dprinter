@@ -29,7 +29,7 @@ static inline void i2cEventBusError() {
 
 /*@
 	requires i2cBufferTX_Tail >= 0;
-	requires i2cBufferTX_Tail < STEPPER_I2C_BUFFERSIZE_TX;
+	requires i2cBufferTX_Tail < I2C_BUFFER_SIZE_TX;
 	behavior bufferUnderrun:
 		assumes i2cBufferTX_Head == i2cBufferTX_Tail;
 		assigns \nothing;

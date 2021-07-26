@@ -1,4 +1,4 @@
-#if !defined(__cplusplus) && !defined(FRAMAC_SKIP)
+#if !defined(__cplusplus) && !defined(true)
 	typedef int bool;
 	#define true 1
 	#define false 0
