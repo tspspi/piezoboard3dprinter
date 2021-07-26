@@ -59,21 +59,62 @@ ISR(ADC_vect) {
 	ADMUX = (oldMux & 0xE0) | (((oldMux & 0x1F) + 1) & 0x03);
 }
 
+/*@
+	assigns refCenterline[0..3];
+	assigns adcMovingAverageCapCenterline;
+
+	ensures refCenterline[0..3] == 0;
+	ensures adcMovingAverageCapCenterline == currentSettings.movingAverage.dwInitSamples;
+*/
 void adcStartCalibration() {
 	uint8_t i;
 
+	/*@
+		loop assigns refCenterline[0..3];
+
+		loop invariant 0 <= i < 4;
+	*/
 	for(i = 0; i < sizeof(refCenterline)/sizeof(float); i=i+1) {
 		refCenterline[i] = 0;
 	}
 	adcMovingAverageCapCenterline = currentSettings.movingAverage.dwInitSamples;
 }
 
+/*@
+	assigns adcMovingAverageCapCenterline;
+	assigns adcTriggered;
+	assigns refCenterline[0..3];
+	assigns currentADCValues[0..3];
+	assigns currentMovingAverage[0..3];
+	assigns currentMovingDeviation[0..3];
+	assigns PRR;
+	assigns ADMUX;
+	assigns ADCSRB;
+	assigns ADCSRA;
+
+	ensures adcMovingAverageCapCenterline == 0;
+	ensures adcTriggered == false;
+	ensures \forall integer iChannel; 0 <= iChannel < 4
+		==> (refCenterline[iChannel] == 0) && (currentADCValues[iChannel] == 0) && (currentMovingAverage[iChannel] == 0) && (currentMovingDeviation[iChannel] == 0);
+	ensures (PRR & 0x01) == 0;
+	ensures ADMUX == 0x41;
+	ensures ADCSRB == 0x00;
+	ensures ADCSRA == (0xBF | 0x40);
+*/
 void adcInit() {
 	uint8_t i;
 
 	adcMovingAverageCapCenterline = 0;
 	adcTriggered = false;
 
+	/*@
+		loop assigns refCenterline[0..3];
+		loop assigns currentADCValues[0..3];
+		loop assigns currentMovingAverage[0..3];
+		loop assigns currentMovingDeviation[0..3];
+
+		loop invariant 0 <= i < 4;
+	*/
 	for(i = 0; i < 4; i=i+1) {
 		refCenterline[i] = 0;
 		currentADCValues[i] = 0;
