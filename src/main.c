@@ -54,11 +54,11 @@ static void eepromSave() {
 }
 
 static void eepromDefaults() {
-	currentSettings.trigMode 														= triggerMode_PiezoOrCapacitive; /* Enable Piezos *and* external probe */
-	currentSettings.movingAverage.thresholdFactor 			= 10;
-	currentSettings.movingAverage.dMovingAverageAlpha 	= 0.4f;
-	currentSettings.movingAverage.dwInitSamples 				= 1000;
-	currentSettings.debounceLength 											= 60; /* In milliseconds (verified against systick timer so might not be totally accurate - do not base backlash compensation on this value!) */
+	currentSettings.trigMode 							= PIEZOBOARD_DEFAULT__TRIGGERMODE;
+	currentSettings.movingAverage.thresholdFactor 		= PIEZOBOARD_DEFAULT__THRESHOLD;
+	currentSettings.movingAverage.dMovingAverageAlpha 	= PIEZOBOARD_DEFAULT__MOVINGAVERAGEALPHA;
+	currentSettings.movingAverage.dwInitSamples 		= PIEZOBOARD_DEFAULT__INITSAMPLES;
+	currentSettings.debounceLength 						= PIEZOBOARD_DEFAULT__DEBOUNCELENGTH;
 
 	eepromSave();
 }
@@ -81,13 +81,7 @@ static void eepromLoad() {
 	/*
 		Initialize to default values and invoke store settings ...
 	*/
-	currentSettings.trigMode 														= triggerMode_PiezoOrCapacitive; /* Enable Piezos *and* external probe */
-	currentSettings.movingAverage.thresholdFactor 			= 10;
-	currentSettings.movingAverage.dMovingAverageAlpha 	= 0.4f;
-	currentSettings.movingAverage.dwInitSamples 				= 1000;
-	currentSettings.debounceLength 											= 60; /* In milliseconds (verified against systick timer so might not be totally accurate - do not base backlash compensation on this value!) */
-
-	eepromSave();
+	eepromDefaults();
 }
 
 /*@
@@ -151,19 +145,25 @@ int main() {
 	/* Load settings from EEPROM */
 	eepromLoad();
 
+	#if 0
+		/*
+			This code is used only for debugging purposes and asserts the output.
+			The output is deasserted by an accompanying piece of code in the ADC
+			ISR.
+		*/
+		PORTB = PORTB | 0x02;
+	#endif
+
 	/* Intiialize ADC */
 	adcInit();
-	adcStartCalibration();
-	#if 0
-		currentSettings.trigMode = triggerMode_Capacitive;
-		currentSettings.debounceLength = 10000;
-	#endif
+
 	for(;;) {
 		i2cMessageLoop();
 		switch(currentSettings.trigMode) {
 			case triggerMode_PiezoOnly:
 			{
 				if((adcTriggered != false) && (debounceCounter == 0)) {
+					adcTriggered = false;
 					PORTB = PORTB | 0x02;
 					debounceCounter = currentSettings.debounceLength;
 					debounceStart = millis();
@@ -173,6 +173,7 @@ int main() {
 			case triggerMode_PiezoVeto:
 			{
 				if((adcTriggered != false) && (debounceCounter == 0) && ((PINB & 0x04) != 0)) {
+					adcTriggered = false;
 					PORTB = PORTB | 0x02;
 					debounceCounter = currentSettings.debounceLength;
 					debounceStart = millis();
@@ -191,7 +192,8 @@ int main() {
 			case triggerMode_PiezoOrCapacitive:
 			{
 				if(((adcTriggered != false) && (debounceCounter == 0)) || ((PINB & 0x04) != 0)) {
-					PORTB = PORTB | 0x04;
+					adcTriggered = false;
+					PORTB = PORTB | 0x02;
 					debounceCounter = currentSettings.debounceLength;
 					debounceStart = millis();
 				}
