@@ -66,7 +66,7 @@ enum piezoboardError piezoboardConnect(
 	(*lpBoardOut) = NULL;
 
 	if(lpBus == NULL) { return piezoE_InvalidParam; }
-	if((lpFlags & (~PIEZOBOARD_FLAG__VALIDFLAGS)) != 0) { return piezoE_InvalidParam; }
+	if((dwFlags & (~PIEZOBOARD_FLAG__VALIDFLAGS)) != 0) { return piezoE_InvalidParam; }
 	if((boardAddress & 0x80) != 0) { return piezoE_InvalidParam; }
 
 	lpNew = (struct piezoboardImpl*)malloc(sizeof(struct piezoboardImpl));
@@ -75,8 +75,9 @@ enum piezoboardError piezoboardConnect(
 	lpNew->objBoard.vtbl = &piezoboardImpl_DefaultVTBL;
 	lpNew->objBoard.lpReserved = (void*)lpNew;
 	lpNew->dwFlags = dwFlags;
+	lpNew->lpBus = lpBus;
 
-	(*lpOut) = &(lpNew->objBoard);
+	(*lpBoardOut) = &(lpNew->objBoard);
 	return piezoE_Ok;
 }
 

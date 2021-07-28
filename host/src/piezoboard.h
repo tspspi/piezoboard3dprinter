@@ -1,6 +1,8 @@
 #ifndef __is_included__2784a374_f0d9_4f7c_9f48_f1ec8f55661d
 #define __is_included__2784a374_f0d9_4f7c_9f48_f1ec8f55661d 1
 
+#include "./sysuuid.h"
+
 #ifdef __cplusplus
 	extern "C" {
 #endif
@@ -22,6 +24,13 @@ enum piezoboardError {
 
 	piezoE_InvalidParam,
 	piezoE_OutOfMemory,
+};
+
+enum piezoTriggerMode {
+	piezoTriggerMode_PiezoVeto			= 0x00,		/* Piezos are triggering, external capacitive or other probe is used as "veto" - signal only triggers if both are active */
+	piezoTriggerMode_PiezoOnly			= 0x01,		/* Trigger whenever piezos are triggering independent of external triggers */
+	piezoTriggerMode_Capacitive			= 0x02,		/* Only trigger when external sensor triggers (just feed through) */
+	piezoTriggerMode_PiezoOrCapacitive	= 0x03,		/* Trigger if any of the sensors triggers */
 };
 
 struct piezoboard;
