@@ -24,6 +24,7 @@ enum piezoboardError {
 
 	piezoE_InvalidParam,
 	piezoE_OutOfMemory,
+	piezoE_ImplementationError,
 };
 
 enum piezoTriggerMode {
@@ -70,20 +71,32 @@ typedef enum piezoboardError (*lpfnPiezoboard_StoreSettings)(
 	struct piezoboard* lpSelf
 );
 
+typedef enum piezoboardError (*lpfnPiezoboard_DebugCurrentSensorReadings)(
+	struct piezoboard* lpSelf,
+	uint16_t* lpOut[4]
+);
+typedef enum piezoboardError (*lpfnPiezoboard_DebugCurrentSensorAverages)(
+	struct piezoboard* lpSelf,
+	uint16_t* lpOut[4]
+);
+
 
 struct piezoboardVtbl {
-	lpfnPiezoboard_Release								release;
+	lpfnPiezoboard_Release										release;
 
-	lpfnPiezoboard_Identify								identify;
+	lpfnPiezoboard_Identify										identify;
 
-	lpfnPiezoboard_SetThreshold						setThreshold;
-	lpfnPiezoboard_GetThreshold						getThreshold;
-	lpfnPiezoboard_GetTriggerMode					getTriggerMode;
-	lpfnPiezoboard_SetTriggerMode					setTriggerMode;
+	lpfnPiezoboard_SetThreshold								setThreshold;
+	lpfnPiezoboard_GetThreshold								getThreshold;
+	lpfnPiezoboard_GetTriggerMode							getTriggerMode;
+	lpfnPiezoboard_SetTriggerMode							setTriggerMode;
 
-	lpfnPiezoboard_Reset									reset;
-	lpfnPiezoboard_Recalibrate						recalibrate;
-	lpfnPiezoboard_StoreSettings					storeSettings;
+	lpfnPiezoboard_Reset											reset;
+	lpfnPiezoboard_Recalibrate								recalibrate;
+	lpfnPiezoboard_StoreSettings							storeSettings;
+
+	lpfnPiezoboard_DebugCurrentSensorReadings	getSensorReadings;
+	lpfnPiezoboard_DebugCurrentSensorAverages	getSensorAverages;
 };
 struct piezoboard {
 	struct piezoboardVtbl*								vtbl;

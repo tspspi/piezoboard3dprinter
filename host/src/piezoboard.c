@@ -33,25 +33,141 @@ static enum piezoboardError piezoboardImpl__Release(
 	return piezoE_Ok;
 }
 
+static enum piezoboardError piezoboardImpl__Identify(
+	struct piezoboard* lpSelf,
+	struct sysUuid* lpOut,
+	uint8_t* lpVersionOut
+) {
+	struct piezoboardImpl* lpThis;
+
+	if(lpSelf == NULL) { return piezoE_InvalidParam; }
+
+	lpThis = (struct piezoboardImpl*)(lpSelf->lpReserved);
+
+	return piezoE_ImplementationError;
+}
+static enum piezoboardError piezoboardImpl__SetThreshold(
+	struct piezoboard* lpSelf,
+	uint8_t dThreshold
+) {
+	struct piezoboardImpl* lpThis;
+
+	if(lpSelf == NULL) { return piezoE_InvalidParam; }
+
+	lpThis = (struct piezoboardImpl*)(lpSelf->lpReserved);
+
+	return piezoE_ImplementationError;
+}
+static enum piezoboardError piezoboardImpl__GetThreshold(
+	struct piezoboard* lpSelf,
+	uint8_t* lpThreshold
+) {
+	struct piezoboardImpl* lpThis;
+
+	if(lpSelf == NULL) { return piezoE_InvalidParam; }
+
+	lpThis = (struct piezoboardImpl*)(lpSelf->lpReserved);
+
+	return piezoE_ImplementationError;
+}
+static enum piezoboardError piezoboardImpl__GetTriggerMode(
+	struct piezoboard* lpSelf,
+	enum piezoTriggerMode* lpTriggerMode
+) {
+	struct piezoboardImpl* lpThis;
+
+	if(lpSelf == NULL) { return piezoE_InvalidParam; }
+
+	lpThis = (struct piezoboardImpl*)(lpSelf->lpReserved);
+
+	return piezoE_ImplementationError;
+}
+static enum piezoboardError piezoboardImpl__SetTriggerMode(
+	struct piezoboard* lpSelf,
+	enum piezoTriggerMode trigMode
+) {
+	struct piezoboardImpl* lpThis;
+
+	if(lpSelf == NULL) { return piezoE_InvalidParam; }
+
+	lpThis = (struct piezoboardImpl*)(lpSelf->lpReserved);
+
+	return piezoE_ImplementationError;
+}
+static enum piezoboardError piezoboardImpl__Reset(
+	struct piezoboard* lpSelf
+) {
+	struct piezoboardImpl* lpThis;
+
+	if(lpSelf == NULL) { return piezoE_InvalidParam; }
+
+	lpThis = (struct piezoboardImpl*)(lpSelf->lpReserved);
+
+	return piezoE_ImplementationError;
+}
+static enum piezoboardError piezoboardImpl__Recalibrate(
+	struct piezoboard* lpSelf
+) {
+	struct piezoboardImpl* lpThis;
+
+	if(lpSelf == NULL) { return piezoE_InvalidParam; }
+
+	lpThis = (struct piezoboardImpl*)(lpSelf->lpReserved);
+
+	return piezoE_ImplementationError;
+}
+static enum piezoboardError piezoboardImpl__StoreSettings(
+	struct piezoboard* lpSelf
+) {
+	struct piezoboardImpl* lpThis;
+
+	if(lpSelf == NULL) { return piezoE_InvalidParam; }
+
+	lpThis = (struct piezoboardImpl*)(lpSelf->lpReserved);
+
+	return piezoE_ImplementationError;
+}
 
 
+static enum piezoboardError piezoboardImpl__DebugCurrentSensorReadings(
+	struct piezoboard* lpSelf,
+	uint16_t* lpOut[4]
+) {
+	struct piezoboardImpl* lpThis;
 
+	if(lpSelf == NULL) { return piezoE_InvalidParam; }
 
+	lpThis = (struct piezoboardImpl*)(lpSelf->lpReserved);
+
+	return piezoE_ImplementationError;
+}
+static enum piezoboardError piezoboardImpl__DebugCurrentSensorAverages(
+	struct piezoboard* lpSelf,
+	uint16_t* lpOut[4]
+) {
+	struct piezoboardImpl* lpThis;
+
+	if(lpSelf == NULL) { return piezoE_InvalidParam; }
+
+	lpThis = (struct piezoboardImpl*)(lpSelf->lpReserved);
+
+	return piezoE_ImplementationError;
+}
 
 
 static struct piezoboardVtbl piezoboardImpl_DefaultVTBL = {
 	&piezoboardImpl__Release,
 
-	NULL,
+	&piezoboardImpl__Identify,
 
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	&piezoboardImpl__SetThreshold,
+	&piezoboardImpl__GetThreshold,
+	&piezoboardImpl__GetTriggerMode,
+	&piezoboardImpl__SetTriggerMode,
 
-	NULL,
-	NULL,
-	NULL
+	&piezoboardImpl__Reset,
+	&piezoboardImpl__Recalibrate,
+	&piezoboardImpl__StoreSettings
 };
 
 enum piezoboardError piezoboardConnect(
