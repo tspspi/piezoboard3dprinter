@@ -24,7 +24,7 @@ static enum piezoboardError piezoboardImpl__Release(
 
 	lpThis = (struct piezoboardImpl*)(lpSelf->lpReserved);
 
-	if((lpThis->dwFlags & PIEZOBOARD_FLAG__NO_BUS_CLOSE_ON_RELEASE) == 0) {
+	if((lpThis->dwFlags & PIEZOBOARD_FLAG__BUS_CLOSE_ON_RELEASE) != 0) {
 		lpThis->lpBus->vtbl->release(lpThis->lpBus);
 		lpThis->lpBus = NULL;
 	}
