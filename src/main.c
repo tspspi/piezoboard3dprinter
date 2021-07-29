@@ -221,10 +221,9 @@ int main() {
 	}
 }
 
-static uint8_t handleI2CMessage_Response_IDAndVersion[16+2] = {
+static uint8_t handleI2CMessage_Response_IDAndVersion[16+1] = {
 	0xca, 0x26, 0x13, 0x06, 0xd7, 0x64, 0x11, 0xeb, 0x94, 0x24, 0xb4, 0x99, 0xba, 0xdf, 0x00, 0xa1,
-	0x01,
-	0xe8 /* Checksum - update on any change! */
+	0x01
 };
 
 /*
@@ -245,15 +244,14 @@ void handleI2CMessage(
 	switch(opCode) {
 		case i2cCmd_GetIDAndVersion:
 		{
-			i2cTransmitBytes(handleI2CMessage_Response_IDAndVersion, sizeof(handleI2CMessage_Response_IDAndVersion));
+			i2cTransmitPacket(handleI2CMessage_Response_IDAndVersion, i2cCmd_GetIDAndVersion, sizeof(handleI2CMessage_Response_IDAndVersion));
 			break;
 		}
 		case i2cCmd_GetThreshold:
 		{
-			uint8_t bResponse[2];
+			uint8_t bResponse[1];
 			bResponse[0] = (uint8_t)(currentSettings.movingAverage.thresholdFactor);
-			bResponse[1] = 0x00 ^ (uint8_t)(currentSettings.movingAverage.thresholdFactor);
-			i2cTransmitBytes(bResponse, sizeof(bResponse));
+			i2cTransmitPacket(bResponse, i2cCmd_GetThreshold, sizeof(bResponse));
 			break;
 		}
 		case i2cCmd_SetThreshold:
@@ -270,13 +268,72 @@ void handleI2CMessage(
 			break;
 		}
 		case i2cCmd_ReadCurrentValues:
+		{
+			uint16_t bufferedCounts[4];
+
+			{
+				uint8_t oldSREG = SREG;
+				#ifndef FRAMAC_SKIP
+					cli();
+				#endif
+
+				bufferedCounts[0] = currentADCValues[0];
+				bufferedCounts[1] = currentADCValues[1];
+				bufferedCounts[2] = currentADCValues[2];
+				bufferedCounts[3] = currentADCValues[3];
+
+				SREG = oldSREG;
+			}
+
+			uint8_t bResponse[4*2];
+			bResponse[0] = ((uint8_t)(bufferedCounts[0] & 0xFF));
+			bResponse[1] = ((uint8_t)((bufferedCounts[0] >> 8) & 0xFF));
+			bResponse[2] = ((uint8_t)(bufferedCounts[1] & 0xFF));
+			bResponse[3] = ((uint8_t)((bufferedCounts[1] >> 8) & 0xFF));
+			bResponse[4] = ((uint8_t)(bufferedCounts[2] & 0xFF));
+			bResponse[5] = ((uint8_t)((bufferedCounts[2] >> 8) & 0xFF));
+			bResponse[6] = ((uint8_t)(bufferedCounts[3] & 0xFF));
+			bResponse[7] = ((uint8_t)((bufferedCounts[3] >> 8) & 0xFF));
+
+			i2cTransmitPacket(bResponse, i2cCmd_ReadCurrentValues, sizeof(bResponse));
+			break;
+		}
 		case i2cCmd_ReadCurrentAverages:
+		{
+			float bufferedAverages[4];
+			{
+				uint8_t oldSREG = SREG;
+				#ifndef FRAMAC_SKIP
+					cli();
+				#endif
+
+				bufferedAverages[0] = currentMovingAverage[0];
+				bufferedAverages[1] = currentMovingAverage[1];
+				bufferedAverages[2] = currentMovingAverage[2];
+				bufferedAverages[3] = currentMovingAverage[3];
+
+				SREG = oldSREG;
+			}
+
+			uint8_t bResponse[4*2];
+
+			bResponse[0] = (uint8_t)((((uint16_t)bufferedAverages[0])     ) & 0xFF);
+			bResponse[1] = (uint8_t)((((uint16_t)bufferedAverages[0]) >> 8) & 0xFF);
+			bResponse[2] = (uint8_t)((((uint16_t)bufferedAverages[1])     ) & 0xFF);
+			bResponse[3] = (uint8_t)((((uint16_t)bufferedAverages[1]) >> 8) & 0xFF);
+			bResponse[4] = (uint8_t)((((uint16_t)bufferedAverages[2])     ) & 0xFF);
+			bResponse[5] = (uint8_t)((((uint16_t)bufferedAverages[2]) >> 8) & 0xFF);
+			bResponse[6] = (uint8_t)((((uint16_t)bufferedAverages[3])     ) & 0xFF);
+			bResponse[7] = (uint8_t)((((uint16_t)bufferedAverages[3]) >> 8) & 0xFF);
+
+			i2cTransmitPacket(bResponse, i2cCmd_ReadCurrentAverages, sizeof(bResponse));
+			break;
+		}
 		case i2cCmd_GetTriggerMode:
 		{
-			uint8_t bResponse[2];
+			uint8_t bResponse[1];
 			bResponse[0] = (uint8_t)currentSettings.trigMode;
-			bResponse[1] = 0x00 ^ (uint8_t)currentSettings.trigMode;
-			i2cTransmitBytes(bResponse, sizeof(bResponse));
+			i2cTransmitPacket(bResponse, i2cCmd_GetTriggerMode, sizeof(bResponse));
 			break;
 		}
 		case i2cCmd_SetTriggerMode:
