@@ -167,7 +167,10 @@ static struct piezoboardVtbl piezoboardImpl_DefaultVTBL = {
 
 	&piezoboardImpl__Reset,
 	&piezoboardImpl__Recalibrate,
-	&piezoboardImpl__StoreSettings
+	&piezoboardImpl__StoreSettings,
+
+	&piezoboardImpl__DebugCurrentSensorReadings,
+	&piezoboardImpl__DebugCurrentSensorAverages
 };
 
 enum piezoboardError piezoboardConnect(
