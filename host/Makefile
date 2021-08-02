@@ -6,7 +6,7 @@ OBJS=tmp/i2c.o \
 	tmp/piezoboard.o \
 	tmp/sysuuid.o
 
-all: bin/libsimplei2c.a bin/libpiezoboard.a
+all: bin/libsimplei2c.a bin/libpiezoboard.a bin/piezocli
 
 bin/libsimplei2c.a: tmp/i2c.o
 
@@ -14,7 +14,12 @@ bin/libsimplei2c.a: tmp/i2c.o
 
 bin/libpiezoboard.a: $(OBJS)
 
+	ar -crs bin/libpiezoboard.a $(OBJS)
 
+bin/piezocli: bin/libpiezoboard.a src/maincli.c
+
+	$(CCOBJ) -o tmp/maincli.o src/maincli.c
+	$(CCLINK) -o bin/piezocli -L./bin/ tmp/maincli.o -lpiezoboard
 
 tmp/i2c.o: src/i2c.c src/i2c.h
 

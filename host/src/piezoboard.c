@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "./i2c.h"
 #include "./piezoboard.h"
@@ -8,11 +9,24 @@
 	extern "C" {
 #endif
 
+enum piezoboardImpl_OpCode {
+	opCode_GetIdAndVersion					= 0x01,
+	opCode_GetThreshold						= 0x02,
+	opCode_SetThreshold						= 0x03,
+	opCode_ReadCurrentValues				= 0x04,
+	opCode_ReadCurrentAverages				= 0x05,
+	opCode_SetTriggerMode					= 0x06,
+	opCode_GetTriggerMode					= 0x07,
+	opCode_Reset							= 0x08,
+	opCode_Recalibrate						= 0x09,
+};
+
 struct piezoboardImpl {
 	struct piezoboard						objBoard;
 
 	struct i2cBus*							lpBus;
-	uint32_t										dwFlags;
+	uint8_t									devAddress;
+	uint32_t								dwFlags;
 };
 
 static enum piezoboardError piezoboardImpl__Release(
@@ -33,18 +47,55 @@ static enum piezoboardError piezoboardImpl__Release(
 	return piezoE_Ok;
 }
 
+static uint8_t piezoboardImpl__Identify__Command[] = { 0xAA, 0x55, 0xAA, 0x55, opCode_GetIdAndVersion, 0x00, 0x01 };
 static enum piezoboardError piezoboardImpl__Identify(
 	struct piezoboard* lpSelf,
 	struct sysUuid* lpOut,
 	uint8_t* lpVersionOut
 ) {
 	struct piezoboardImpl* lpThis;
+	enum i2cError ei2c;
+	uint8_t bResponse[16+1+4+2+1];
 
 	if(lpSelf == NULL) { return piezoE_InvalidParam; }
 
 	lpThis = (struct piezoboardImpl*)(lpSelf->lpReserved);
 
-	return piezoE_ImplementationError;
+	/* Write request */
+	ei2c = lpThis->lpBus->vtbl->write(lpThis->lpBus, lpThis->devAddress, piezoboardImpl__Identify__Command, sizeof(piezoboardImpl__Identify__Command));
+	if(ei2c != i2cE_Ok) {
+		return piezoE_Failed;
+	}
+
+	/* Read response */
+	ei2c = lpThis->lpBus->vtbl->read(lpThis->lpBus, lpThis->devAddress, bResponse, sizeof(bResponse));
+	if(ei2c != i2cE_Ok) {
+		return piezoE_Failed;
+	}
+
+	/* validate response and write outputs ... */
+	if((bResponse[0] != 0xAA) || (bResponse[1] != 0x55) || (bResponse[2] != 0xAA) || (bResponse[3] != 0x55) || (bResponse[4] != opCode_GetIdAndVersion) || (bResponse[5] != (sizeof(bResponse)-7))) {
+		return piezoE_CommunicationError;
+	}
+
+	/* Verify checksum */
+	{
+		uint8_t chkSum = 0x00;
+		for(unsigned long int i = 4; i < sizeof(bResponse); i=i+1) {
+			chkSum = chkSum ^ bResponse[i];
+		}
+		if(chkSum != 0x00) {
+			return piezoE_ChecksumError;
+		}
+	}
+
+	/* decode and write output */
+	if(lpVersionOut != NULL) { (*lpVersionOut) = bResponse[6+16]; }
+	if(lpOut != NULL) {
+		memcpy((void*)lpOut, &(bResponse[6]), 16);
+	}
+
+	return piezoE_Ok;
 }
 static enum piezoboardError piezoboardImpl__SetThreshold(
 	struct piezoboard* lpSelf,

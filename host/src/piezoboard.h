@@ -25,6 +25,10 @@ enum piezoboardError {
 	piezoE_InvalidParam,
 	piezoE_OutOfMemory,
 	piezoE_ImplementationError,
+
+	piezoE_Failed,
+	piezoE_CommunicationError,
+	piezoE_ChecksumError,
 };
 
 enum piezoTriggerMode {
