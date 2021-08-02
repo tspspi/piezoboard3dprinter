@@ -208,7 +208,7 @@ void i2cMessageLoop() {
         We got a full packet that's correctly checksummed ...
     */
     handleI2CMessage(i2cBufferRX, I2C_BUFFER_SIZE_RX, i2cBufferRX_Tail+4, requiredPacketLength-4-1);
-    i2cBufferRX_Tail = i2cBufferRX_Tail + requiredPacketLength; /* Drop data */
+    i2cBufferRX_Tail = (i2cBufferRX_Tail + requiredPacketLength) % I2C_BUFFER_SIZE_RX; /* Drop data */
 }
 
 void i2cTransmitBytes(
