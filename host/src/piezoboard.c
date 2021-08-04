@@ -125,12 +125,37 @@ static enum piezoboardError piezoboardImpl__SetThreshold(
 	uint8_t dThreshold
 ) {
 	struct piezoboardImpl* lpThis;
+	enum i2cError ei2c;
+	uint8_t bCommand[8];
+	unsigned long int i;
 
 	if(lpSelf == NULL) { return piezoE_InvalidParam; }
 
 	lpThis = (struct piezoboardImpl*)(lpSelf->lpReserved);
 
-	return piezoE_ImplementationError;
+	bCommand[0] = 0xAA;
+	bCommand[1] = 0x55;
+	bCommand[2] = 0xAA;
+	bCommand[3] = 0x55;
+	bCommand[4] = opCode_SetThreshold;
+	bCommand[5] = 0x01;
+
+	bCommand[6] = dThreshold;
+
+	bCommand[7] = 0x00;
+	for(i = 4; i < sizeof(bCommand)-1; i=i+1) {
+		bCommand[7] = bCommand[7] ^ bCommand[i];
+	}
+
+	ei2c = lpThis->lpBus->vtbl->write(lpThis->lpBus, lpThis->devAddress, bCommand, sizeof(bCommand));
+	if(ei2c != i2cE_Ok) {
+		#ifdef DEBUG
+			printf("%s:%u Write failed (%u)\n", __FILE__, __LINE__, ei2c);
+		#endif
+		return piezoE_CommunicationError;
+	}
+
+	return piezoE_Ok;
 }
 static uint8_t piezoboardImpl__GetThreshold__Command[] = { 0xAA, 0x55, 0xAA, 0x55, opCode_GetThreshold, 0x00, 0x02 };
 static enum piezoboardError piezoboardImpl__GetThreshold(
