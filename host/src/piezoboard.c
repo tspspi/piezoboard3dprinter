@@ -4,6 +4,7 @@
 #ifdef DEBUG
 	#include <stdio.h>
 #endif
+#include <unistd.h>
 
 #include "./i2c.h"
 #include "./piezoboard.h"
@@ -31,6 +32,10 @@ struct piezoboardImpl {
 	uint8_t									devAddress;
 	uint32_t								dwFlags;
 };
+
+static void responseDelay() {
+	usleep(1000 * 25);
+}
 
 static enum piezoboardError piezoboardImpl__Release(
 	struct piezoboard* lpSelf
@@ -72,6 +77,9 @@ static enum piezoboardError piezoboardImpl__Identify(
 		#endif
 		return piezoE_Failed;
 	}
+
+	/* Delay */
+	responseDelay();
 
 	/* Read response */
 	ei2c = lpThis->lpBus->vtbl->read(lpThis->lpBus, lpThis->devAddress, bResponse, sizeof(bResponse));
@@ -124,17 +132,66 @@ static enum piezoboardError piezoboardImpl__SetThreshold(
 
 	return piezoE_ImplementationError;
 }
+static uint8_t piezoboardImpl__GetThreshold__Command[] = { 0xAA, 0x55, 0xAA, 0x55, opCode_GetThreshold, 0x00, 0x02 };
 static enum piezoboardError piezoboardImpl__GetThreshold(
 	struct piezoboard* lpSelf,
 	uint8_t* lpThreshold
 ) {
 	struct piezoboardImpl* lpThis;
+	enum i2cError ei2c;
+	uint8_t bResponse[4+2+1+1];
 
 	if(lpSelf == NULL) { return piezoE_InvalidParam; }
 
 	lpThis = (struct piezoboardImpl*)(lpSelf->lpReserved);
 
-	return piezoE_ImplementationError;
+	/* Write request */
+	ei2c = lpThis->lpBus->vtbl->write(lpThis->lpBus, lpThis->devAddress, piezoboardImpl__GetThreshold__Command, sizeof(piezoboardImpl__GetThreshold__Command));
+	if(ei2c != i2cE_Ok) {
+		#ifdef DEBUG
+			printf("%s:%u Write failed (%u)\n", __FILE__, __LINE__, ei2c);
+		#endif
+		return piezoE_Failed;
+	}
+
+	/* Delay */
+	responseDelay();
+
+	/* Read response */
+	ei2c = lpThis->lpBus->vtbl->read(lpThis->lpBus, lpThis->devAddress, bResponse, sizeof(bResponse));
+	if(ei2c != i2cE_Ok) {
+		#ifdef DEBUG
+			printf("%s:%u Read failed (%u)\n", __FILE__, __LINE__, ei2c);
+		#endif
+		return piezoE_Failed;
+	}
+
+	/* Validate response and write outputs ... */
+	if((bResponse[0] != 0xAA) || (bResponse[1] != 0x55) || (bResponse[2] != 0xAA) || (bResponse[3] != 0x55) || (bResponse[4] != opCode_GetThreshold) || (bResponse[5] != (sizeof(bResponse) - 5))) {
+		#ifdef DEBUG
+			printf("%s:%u Packet format error\n", __FILE__, __LINE__);
+		#endif
+		return piezoE_CommunicationError;
+	}
+
+	/* Checksum verification */
+	{
+		uint8_t chkSum = 0x00;
+		for(unsigned long int i = 4; i < sizeof(bResponse); i=i+1) {
+			chkSum = chkSum ^ bResponse[i];
+		}
+		if(chkSum != 0x00) {
+			#ifdef DEBUG
+				printf("%s:%u Checksum format error\n", __FILE__, __LINE__);
+			#endif
+			return piezoE_ChecksumError;
+		}
+	}
+
+	/* Decode and write output */
+	if(lpThreshold != NULL) { (*lpThreshold) = bResponse[6]; }
+
+	return piezoE_Ok;
 }
 static enum piezoboardError piezoboardImpl__GetTriggerMode(
 	struct piezoboard* lpSelf,
