@@ -32,3 +32,10 @@ tmp/sysuuid.o: src/sysuuid.c src/sysuuid.h
 tmp/piezoboard.o: src/sysuuid.h src/piezoboard.c src/piezoboard.h
 
 	$(CCOBJ) -o tmp/piezoboard.o src/piezoboard.c
+
+clean:
+
+	-rm tmp/*.o
+	-rm bin/*.a
+
+.PHONY: clean
