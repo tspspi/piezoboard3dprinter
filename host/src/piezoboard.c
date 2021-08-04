@@ -1,6 +1,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef DEBUG
+	#include <stdio.h>
+#endif
 
 #include "./i2c.h"
 #include "./piezoboard.h"
@@ -64,17 +67,26 @@ static enum piezoboardError piezoboardImpl__Identify(
 	/* Write request */
 	ei2c = lpThis->lpBus->vtbl->write(lpThis->lpBus, lpThis->devAddress, piezoboardImpl__Identify__Command, sizeof(piezoboardImpl__Identify__Command));
 	if(ei2c != i2cE_Ok) {
+		#ifdef DEBUG
+			printf("%s:%u Write failed (%u)\n", __FILE__, __LINE__, ei2c);
+		#endif
 		return piezoE_Failed;
 	}
 
 	/* Read response */
 	ei2c = lpThis->lpBus->vtbl->read(lpThis->lpBus, lpThis->devAddress, bResponse, sizeof(bResponse));
 	if(ei2c != i2cE_Ok) {
+		#ifdef DEBUG
+			printf("%s:%u Read failed (%u)\n", __FILE__, __LINE__, ei2c);
+		#endif
 		return piezoE_Failed;
 	}
 
 	/* validate response and write outputs ... */
-	if((bResponse[0] != 0xAA) || (bResponse[1] != 0x55) || (bResponse[2] != 0xAA) || (bResponse[3] != 0x55) || (bResponse[4] != opCode_GetIdAndVersion) || (bResponse[5] != (sizeof(bResponse)-7))) {
+	if((bResponse[0] != 0xAA) || (bResponse[1] != 0x55) || (bResponse[2] != 0xAA) || (bResponse[3] != 0x55) || (bResponse[4] != opCode_GetIdAndVersion) || (bResponse[5] != (sizeof(bResponse)-5))) {
+		#ifdef DEBUG
+			printf("%s:%u Packet format error\n", __FILE__, __LINE__);
+		#endif
 		return piezoE_CommunicationError;
 	}
 
@@ -85,6 +97,9 @@ static enum piezoboardError piezoboardImpl__Identify(
 			chkSum = chkSum ^ bResponse[i];
 		}
 		if(chkSum != 0x00) {
+			#ifdef DEBUG
+				printf("%s:%u Checksum format error\n", __FILE__, __LINE__);
+			#endif
 			return piezoE_ChecksumError;
 		}
 	}
@@ -244,6 +259,7 @@ enum piezoboardError piezoboardConnect(
 
 	lpNew->objBoard.vtbl = &piezoboardImpl_DefaultVTBL;
 	lpNew->objBoard.lpReserved = (void*)lpNew;
+	lpNew->devAddress = boardAddress;
 	lpNew->dwFlags = dwFlags;
 	lpNew->lpBus = lpBus;
 
