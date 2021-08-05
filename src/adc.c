@@ -68,6 +68,10 @@ ISR(ADC_vect) {
 */
 void adcStartCalibration() {
 	uint8_t i;
+	uint8_t sregOld = SREG;
+	#ifndef FRAMAC_SKIP
+		cli();
+	#endif
 
 	/*@
 		loop assigns refCenterline[0..3];
@@ -78,6 +82,8 @@ void adcStartCalibration() {
 		refCenterline[i] = 0;
 	}
 	adcMovingAverageCapCenterline = currentSettings.movingAverage.dwInitSamples;
+
+	SREG = sregOld;
 }
 
 /*@
