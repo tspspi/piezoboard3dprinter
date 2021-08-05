@@ -378,7 +378,7 @@ void handleI2CMessage(
 			uint8_t alphaPct = lpRingbuffer[dwBase + 2];
 			if(alphaPct > 100) { alphaPct = 100; }
 
-			currentSettings.movingAverage.dMovingAverageAlpha = alphaPct;
+			currentSettings.movingAverage.dMovingAverageAlpha = ((float)alphaPct) / 100.0;
 			break;
 		}
 		default:
