@@ -1,11 +1,12 @@
 # Piezo board for 3D printer
 
-This is the firmware for my AVR based [piezo bedleveling interface](/2019/09/11/piezobedlevel.html)
-for my 3D printer. As described on the above blogpost this board simply
-interfaces 4 piezo disks directly to the ATMega328P analog digital converter.
-The disks are biased to allow detecting both positive and negative edges.
-An additional external port for a capacitive (or inductive, mechanical, optical, etc.)
-probe is available and the board supports different modes of operation:
+This is the firmware for my AVR based [piezo bedleveling interface](https://www.tspi.at/2019/09/11/piezobedlevel.html)
+for my 3D printer (Schematics and board layouts can be found on [GitHub](https://github.com/tspspi/PiezoBedSensor)).
+As described on the above blogpost this board simply interfaces 4 piezo disks
+directly to the ATMega328P analog digital converter. The disks are biased to allow
+detecting both positive and negative edges. An additional external port for a
+capacitive (or inductive, mechanical, optical, etc.) probe is available and the
+board supports different modes of operation:
 
 * _Piezo only_ asserts the trigger output whenever the signal of the piezo disks
   deviated more than the configured threshold from their calibrated centerline.
