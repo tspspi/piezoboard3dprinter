@@ -48,7 +48,7 @@ static void eepromSave() {
 	}
 
 	currentSettings.xorChecksum = chkSum;
-	currentSettings.negChecksum = (~chkSum);
+	currentSettings.negChecksum = (chkSum ^ 0xFF);
 
 	eeprom_write_block(&currentSettings, SETTINGS_EEPROM_LOCATION, sizeof(struct eepromSettings));
 }
@@ -74,7 +74,7 @@ static void eepromLoad() {
 		chkSum = chkSum ^ ((char*)(&currentSettings))[i];
 	}
 
-	if((chkSum == currentSettings.xorChecksum) && ((~chkSum) == currentSettings.negChecksum)) {
+	if((chkSum == currentSettings.xorChecksum) && ((chkSum ^ 0xFF) == currentSettings.negChecksum)) {
 		return;
 	}
 
@@ -159,6 +159,7 @@ int main() {
 
 	for(;;) {
 		i2cMessageLoop();
+
 		switch(currentSettings.trigMode) {
 			case triggerMode_PiezoOnly:
 			{
@@ -358,6 +359,9 @@ void handleI2CMessage(
 			break;
 		case i2cCmd_Recalibrate:
 			adcStartCalibration();
+			break;
+		case i2cCmd_StoreSettings:
+			eepromSave();
 			break;
 		default:
 			/* Unknown operation - ignore */
