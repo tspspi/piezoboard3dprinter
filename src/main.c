@@ -363,6 +363,24 @@ void handleI2CMessage(
 		case i2cCmd_StoreSettings:
 			eepromSave();
 			break;
+		case i2cCmd_GetAlphaValue:
+		{
+			uint8_t bResponse[1];
+			bResponse[0] = (uint8_t)(currentSettings.movingAverage.dMovingAverageAlpha * 100.0);
+			i2cTransmitPacket(bResponse, i2cCmd_GetAlphaValue, sizeof(bResponse));
+			break;
+		}
+		case i2cCmd_SetAlphaValue:
+		{
+			if(dwBufferSize < 3) {
+				break; /* Invalid message */
+			}
+			uint8_t alphaPct = lpRingbuffer[dwBase + 2];
+			if(alphaPct > 100) { alphaPct = 100; }
+
+			currentSettings.movingAverage.dMovingAverageAlpha = alphaPct;
+			break;
+		}
 		default:
 			/* Unknown operation - ignore */
 			break;

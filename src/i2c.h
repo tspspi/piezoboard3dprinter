@@ -29,6 +29,9 @@ enum i2cCommand {
 	i2cCmd_Recalibrate							= 9,
 
 	i2cCmd_StoreSettings						= 10,
+
+	i2cCmd_GetAlphaValue						= 11,
+	i2cCmd_SetAlphaValue						= 12,
 };
 
 /*@

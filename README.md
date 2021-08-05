@@ -55,3 +55,5 @@ Invalid packets will be silently dropped.
 | 0x08   | 0           | Reset board (also erases EEPROM & reverts to default settings)                  | None                                                          |
 | 0x09   | 0           | Calibrate centerline for piezos                                                 | None                                                          |
 | 0x0A   | 0           | Store settings to EEPROM                                                        | None                                                          |
+| 0x0B   | 0           | Get alpha value (moving average)  0-100                                         | 1 Byte data, 1 byte checksum                                  |
+| 0x0C   | 1           | Set alpha value (moving average), 0-100                                         | None                                                          |
