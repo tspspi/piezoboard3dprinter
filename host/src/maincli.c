@@ -46,6 +46,9 @@ static void printUsage(int argc, char* argv[]) {
 	printf("\t\t2\tOnly external trigger\n");
 	printf("\t\t3\tPiezo or external trigger\n");
 
+	printf("\tgetalpha\n\t\tGet the current alpha value\n");
+	printf("\tsetalpha THRESHOLD\n\t\tSet the current alpha value (integer 0-100)\n");
+
 	printf("\trst\n\t\tReset the board and erase EEPROM\n");
 	printf("\tcal\n\t\tExecute recalibration for baseline\n");
 
@@ -89,6 +92,8 @@ int main(int argc, char* argv[]) {
 		} else if(strcmp(argv[i], "id") == 0) { continue; }
 		else if(strcmp(argv[i], "getth") == 0) { continue; }
 		else if(strcmp(argv[i], "setth") == 0) { i = i + 1; continue; }
+		else if(strcmp(argv[i], "getalpha") == 0) { continue; }
+		else if(strcmp(argv[i], "setalpha") == 0) { i = i + 1; continue; }
 		else if(strcmp(argv[i], "gettrig") == 0) { continue; }
 		else if(strcmp(argv[i], "settrig") == 0) { i = i + 1; continue; }
 		else if(strcmp(argv[i], "rst") == 0) { continue; }
@@ -183,6 +188,54 @@ int main(int argc, char* argv[]) {
 			}
 
 			printf("Set new threshold value %u\n", nextThreshold);
+			i = i + 1;
+
+			usleep(100*1000);
+		} else if(strcmp(argv[i], "getalpha") == 0) {
+			uint8_t currentAlpha;
+
+			e = lpPzb->vtbl->getAlpha(lpPzb, &currentAlpha);
+			if(e != piezoE_Ok) {
+				printf("%s:%u Failed to query current alpha (%u)\n", __FILE__, __LINE__, e);
+				r = 2;
+				break;
+			}
+
+			printf("Current alpha: %u\n", currentAlpha);
+
+			usleep(100*1000);
+		} else if(strcmp(argv[i], "setalpha") == 0) {
+			unsigned long int readValue;
+			uint8_t nextAlpha;
+
+			if(argc <= (i+1)) {
+				printf("Missing new alpha value\n");
+				printUsage(argc, argv);
+				r = 1;
+				break;
+			}
+			if(sscanf(argv[i+1], "%lu", &readValue) != 1) {
+				printf("Invalid new alpha value %s\n", argv[i+1]);
+				printUsage(argc, argv);
+				r = 1;
+				break;
+			}
+			if(readValue > 100) {
+				printf("Invalid new alpha value %lu\n", readValue);
+				printUsage(argc, argv);
+				r = 1;
+				break;
+			}
+			nextAlpha = (uint8_t)readValue;
+
+			e = lpPzb->vtbl->setAlpha(lpPzb, nextAlpha);
+			if(e != piezoE_Ok) {
+				printf("%s:%u Failed to set alpha to %u (code %u)\n", __FILE__, __LINE__, nextAlpha, e);
+				r = 2;
+				break;
+			}
+
+			printf("Set new alpha value %u\n", nextAlpha);
 			i = i + 1;
 
 			usleep(100*1000);

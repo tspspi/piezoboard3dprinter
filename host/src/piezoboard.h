@@ -84,18 +84,29 @@ typedef enum piezoboardError (*lpfnPiezoboard_DebugCurrentSensorAverages)(
 	uint16_t* lpOut[4]
 );
 
+typedef enum piezoboardError (*lpfnPiezoboard_GetAlpha)(
+	struct piezoboard* lpSelf,
+	uint8_t* lpAlpha
+);
+typedef enum piezoboardError (*lpfnPiezoboard_SetAlpha)(
+	struct piezoboard* lpSelf,
+	uint8_t alpha
+);
+
 
 struct piezoboardVtbl {
-	lpfnPiezoboard_Release										release;
+	lpfnPiezoboard_Release									release;
 
-	lpfnPiezoboard_Identify										identify;
+	lpfnPiezoboard_Identify									identify;
 
 	lpfnPiezoboard_SetThreshold								setThreshold;
 	lpfnPiezoboard_GetThreshold								getThreshold;
 	lpfnPiezoboard_GetTriggerMode							getTriggerMode;
 	lpfnPiezoboard_SetTriggerMode							setTriggerMode;
+	lpfnPiezoboard_GetAlpha									getAlpha;
+	lpfnPiezoboard_SetAlpha									setAlpha;
 
-	lpfnPiezoboard_Reset											reset;
+	lpfnPiezoboard_Reset									reset;
 	lpfnPiezoboard_Recalibrate								recalibrate;
 	lpfnPiezoboard_StoreSettings							storeSettings;
 

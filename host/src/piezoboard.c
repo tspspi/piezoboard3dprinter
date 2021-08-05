@@ -24,6 +24,8 @@ enum piezoboardImpl_OpCode {
 	opCode_Reset							= 0x08,
 	opCode_Recalibrate						= 0x09,
 	opCode_StoreSettings					= 0x0A,
+	opCode_GetAlpha							= 0x0B,
+	opCode_SetAlpha							= 0x0C,
 };
 
 struct piezoboardImpl {
@@ -400,6 +402,109 @@ static enum piezoboardError piezoboardImpl__StoreSettings(
 }
 
 
+static enum piezoboardError piezoboardImpl__SetAlpha(
+	struct piezoboard* lpSelf,
+	uint8_t alpha
+) {
+	struct piezoboardImpl* lpThis;
+	enum i2cError ei2c;
+	uint8_t bCommand[8];
+	unsigned long int i;
+
+	if(lpSelf == NULL) { return piezoE_InvalidParam; }
+	if(alpha > 100) { return piezoE_InvalidParam; }
+
+	lpThis = (struct piezoboardImpl*)(lpSelf->lpReserved);
+
+	bCommand[0] = 0xAA;
+	bCommand[1] = 0x55;
+	bCommand[2] = 0xAA;
+	bCommand[3] = 0x55;
+	bCommand[4] = opCode_SetAlpha;
+	bCommand[5] = 0x01;
+
+	bCommand[6] = alpha;
+
+	bCommand[7] = 0x00;
+	for(i = 4; i < sizeof(bCommand)-1; i=i+1) {
+		bCommand[7] = bCommand[7] ^ bCommand[i];
+	}
+
+	ei2c = lpThis->lpBus->vtbl->write(lpThis->lpBus, lpThis->devAddress, bCommand, sizeof(bCommand));
+	if(ei2c != i2cE_Ok) {
+		#ifdef DEBUG
+			printf("%s:%u Write failed (%u)\n", __FILE__, __LINE__, ei2c);
+		#endif
+		return piezoE_CommunicationError;
+	}
+
+	return piezoE_Ok;
+}
+static uint8_t piezoboardImpl__GetAlpha__Command[] = { 0xAA, 0x55, 0xAA, 0x55, opCode_GetAlpha, 0x00, 0x0B };
+static enum piezoboardError piezoboardImpl__GetAlpha(
+	struct piezoboard* lpSelf,
+	uint8_t* lpAlpha
+) {
+	struct piezoboardImpl* lpThis;
+	enum i2cError ei2c;
+	uint8_t bResponse[4+2+1+1];
+
+	if(lpSelf == NULL) { return piezoE_InvalidParam; }
+
+	lpThis = (struct piezoboardImpl*)(lpSelf->lpReserved);
+
+	/* Write request */
+	ei2c = lpThis->lpBus->vtbl->write(lpThis->lpBus, lpThis->devAddress, piezoboardImpl__GetAlpha__Command, sizeof(piezoboardImpl__GetAlpha__Command));
+	if(ei2c != i2cE_Ok) {
+		#ifdef DEBUG
+			printf("%s:%u Write failed (%u)\n", __FILE__, __LINE__, ei2c);
+		#endif
+		return piezoE_Failed;
+	}
+
+	/* Delay */
+	responseDelay();
+	responseDelay();
+
+	/* Read response */
+	ei2c = lpThis->lpBus->vtbl->read(lpThis->lpBus, lpThis->devAddress, bResponse, sizeof(bResponse));
+	if(ei2c != i2cE_Ok) {
+		#ifdef DEBUG
+			printf("%s:%u Read failed (%u)\n", __FILE__, __LINE__, ei2c);
+		#endif
+		return piezoE_Failed;
+	}
+
+	/* Validate response and write outputs ... */
+	if((bResponse[0] != 0xAA) || (bResponse[1] != 0x55) || (bResponse[2] != 0xAA) || (bResponse[3] != 0x55) || (bResponse[4] != opCode_GetAlpha) || (bResponse[5] != (sizeof(bResponse) - 5))) {
+		#ifdef DEBUG
+			printf("%s:%u Packet format error\n", __FILE__, __LINE__);
+		#endif
+		return piezoE_CommunicationError;
+	}
+
+	/* Checksum verification */
+	{
+		uint8_t chkSum = 0x00;
+		for(unsigned long int i = 4; i < sizeof(bResponse); i=i+1) {
+			chkSum = chkSum ^ bResponse[i];
+		}
+		if(chkSum != 0x00) {
+			#ifdef DEBUG
+				printf("%s:%u Checksum format error\n", __FILE__, __LINE__);
+			#endif
+			return piezoE_ChecksumError;
+		}
+	}
+
+	/* Decode and write output */
+	if(lpAlpha != NULL) { (*lpAlpha) = bResponse[6]; }
+
+	return piezoE_Ok;
+}
+
+
+
 static enum piezoboardError piezoboardImpl__DebugCurrentSensorReadings(
 	struct piezoboard* lpSelf,
 	uint16_t* lpOut[4]
@@ -435,6 +540,8 @@ static struct piezoboardVtbl piezoboardImpl_DefaultVTBL = {
 	&piezoboardImpl__GetThreshold,
 	&piezoboardImpl__GetTriggerMode,
 	&piezoboardImpl__SetTriggerMode,
+	&piezoboardImpl__GetAlpha,
+	&piezoboardImpl__SetAlpha,
 
 	&piezoboardImpl__Reset,
 	&piezoboardImpl__Recalibrate,
