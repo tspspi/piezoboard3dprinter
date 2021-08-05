@@ -52,6 +52,6 @@ Invalid packets will be silently dropped.
 | 0x05   | 0           | Query current running averages                                                  | 8 byte sensor readings (2 bytes per channel), 1 byte checksum |
 | 0x06   | 1           | Set trigger mode (0: Piezos with veto, 1: Only Piezo, 2: Use capacitive probe)  | None                                                          |
 | 0x07   | 0           | Get trigger mode                                                                | 1 Byte data, 1 Byte checksum                                  |
-| 0x08   | 0           | Reset board                                                                     | None                                                          |
+| 0x08   | 0           | Reset board (also erases EEPROM & reverts to default settings)                  | None                                                          |
 | 0x09   | 0           | Calibrate centerline for piezos                                                 | None                                                          |
 | 0x0A   | 0           | Store settings to EEPROM                                                        | None                                                          |
