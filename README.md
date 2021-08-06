@@ -29,6 +29,20 @@ can also be used directly from [Marlin](https://marlinfw.org/) by using
 GCodes ```M260``` and ```M261``` to issue commands such as recalibration or
 switching trigger modes in the GCode header.
 
+## State of the project
+
+Note that this is work in progress - it currently works well enough for me to
+be the bed tramming method that I'm using on a daily basis but:
+
+* Noise is really problematic. Especially noisy fans on the hotend. I have to
+  drive to a location around 3 cm away from the bed before performing
+  calibration
+* I had to do much tuning on the sensitivity (threshold) and running
+  average.
+   * Currently I'm personally not using running average at all (alpha = 1)
+   * Maybe I'll try implementing a running median filter or moving on to
+     differentials soon
+
 ## I2C Commands
 
 All I2C commands start with the pattern ```0xAA, 0x55, 0xAA, 0x55```
