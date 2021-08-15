@@ -40,7 +40,11 @@ struct eepromSettings {
 	} movingAverage;
 	uint16_t								debounceLength;
 
-
+	/*
+		Store also calibration settings so one doesn't have to recalibrate
+		every time - turns out to be reproducable anyways
+	*/
+	float 									movingAverageRefCenterline[4];
 
 	/* These two have to be the last bytes */
 	uint8_t 								xorChecksum;				/* All previous bytes xor'ed */

@@ -133,7 +133,10 @@ void adcInit() {
 		cli();
 	#endif
 	{
-		adcStartCalibration();
+		/* In case we have no previous calibration start a new calibration sequence */
+		if((refCenterline[0] == 0.0f) && (refCenterline[1] == 0.0f) && (refCenterline[2] == 0.0f) && (refCenterline[3] == 0.0f)) {
+			adcStartCalibration();
+		}
 
 		PRR = PRR & ~(0x01);
 		ADMUX = 0x40; /* AVCC reference voltage, MUX 0, right aligned */

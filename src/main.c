@@ -60,6 +60,11 @@ static void eepromDefaults() {
 	currentSettings.movingAverage.dwInitSamples 		= PIEZOBOARD_DEFAULT__INITSAMPLES;
 	currentSettings.debounceLength 						= PIEZOBOARD_DEFAULT__DEBOUNCELENGTH;
 
+	currentSettings.movingAverageRefCenterline[0]		= 0.0f;
+	currentSettings.movingAverageRefCenterline[1]		= 0.0f;
+	currentSettings.movingAverageRefCenterline[2]		= 0.0f;
+	currentSettings.movingAverageRefCenterline[3]		= 0.0f;
+
 	eepromSave();
 }
 
@@ -75,6 +80,10 @@ static void eepromLoad() {
 	}
 
 	if((chkSum == currentSettings.xorChecksum) && ((chkSum ^ 0xFF) == currentSettings.negChecksum)) {
+		refCenterline[0] = currentSettings.movingAverageRefCenterline[0];
+		refCenterline[1] = currentSettings.movingAverageRefCenterline[1];
+		refCenterline[2] = currentSettings.movingAverageRefCenterline[2];
+		refCenterline[3] = currentSettings.movingAverageRefCenterline[3];
 		return;
 	}
 
